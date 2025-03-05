@@ -9,9 +9,9 @@ function BookDetails() {
   const [book, setBook] = useState(null);
   const [reviews, setReviews] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [editingReview, setEditingReview] = useState(null);
   const [reviewText, setReviewText] = useState('');
   const [rating, setRating] = useState(5);
-  const [error, setError] = useState('');
 
   useEffect(() => {
     const fetchBookDetails = async () => {
@@ -28,26 +28,29 @@ function BookDetails() {
     fetchBookDetails();
   }, [id]);
 
-  const handleReviewSubmit = async (e) => {
-    e.preventDefault();
-    if (!user) {
-      setError('You must be logged in to submit a review.');
-      return;
-    }
+  const handleReviewEdit = (review) => {
+    setEditingReview(review._id);
+    setReviewText(review.reviewText);
+    setRating(review.rating);
+  };
 
+  const handleReviewUpdate = async (e) => {
+    e.preventDefault();
     try {
-      const { data } = await API.post('/reviews', {
-        book: id,
-        reviewText,
-        rating
-      });
-      setReviews([...reviews, data]); 
-      setReviewText('');
-      setRating(5);
-      setError('');
+      await API.put(`/reviews/${editingReview}`, { reviewText, rating });
+      setReviews(reviews.map(review => review._id === editingReview ? { ...review, reviewText, rating } : review));
+      setEditingReview(null);
     } catch (error) {
-      console.error('Error submitting review:', error);
-      setError('Failed to submit review. Please try again.');
+      console.error('Error updating review:', error);
+    }
+  };
+
+  const handleReviewDelete = async (reviewId) => {
+    try {
+      await API.delete(`/reviews/${reviewId}`);
+      setReviews(reviews.filter(review => review._id !== reviewId));
+    } catch (error) {
+      console.error('Error deleting review:', error);
     }
   };
 
@@ -57,50 +60,38 @@ function BookDetails() {
     <div className="container mx-auto p-4">
       <h1 className="text-3xl font-bold">{book.title}</h1>
       <p>Author: {book.author}</p>
-      <p>Description: {book.description}</p>
       <p>Rating: {book.rating} ⭐</p>
 
       <h2 className="text-2xl font-bold mt-6">Reviews</h2>
       {reviews.length > 0 ? (
         reviews.map((review) => (
           <div key={review._id} className="border p-4 mt-2 rounded">
-            <p>{review.reviewText}</p>
-            <p>Rating: {review.rating} ⭐</p>
-            <p>- {review.user?.name || 'Anonymous'}</p>
+            {editingReview === review._id ? (
+              <form onSubmit={handleReviewUpdate}>
+                <textarea value={reviewText} onChange={(e) => setReviewText(e.target.value)} required />
+                <select value={rating} onChange={(e) => setRating(e.target.value)}>
+                  {[5, 4, 3, 2, 1].map(num => <option key={num} value={num}>{num} Stars</option>)}
+                </select>
+                <button type="submit">Save</button>
+                <button onClick={() => setEditingReview(null)}>Cancel</button>
+              </form>
+            ) : (
+              <>
+                <p>{review.reviewText}</p>
+                <p>Rating: {review.rating} ⭐</p>
+                <p>- {review.user?.name || 'Anonymous'}</p>
+                {user && user.id === review.user?._id && (
+                  <div>
+                    <button onClick={() => handleReviewEdit(review)}>Edit</button>
+                    <button onClick={() => handleReviewDelete(review._id)}>Delete</button>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         ))
       ) : (
         <p>No reviews yet.</p>
-      )}
-
-      {user ? (
-        <form onSubmit={handleReviewSubmit} className="mt-6 p-4 border rounded">
-          <h3 className="text-lg font-bold">Submit a Review</h3>
-          {error && <p className="text-red-500">{error}</p>}
-          <textarea
-            value={reviewText}
-            onChange={(e) => setReviewText(e.target.value)}
-            className="w-full p-2 border rounded mt-2"
-            placeholder="Write your review here..."
-            required
-          />
-          <select
-            value={rating}
-            onChange={(e) => setRating(e.target.value)}
-            className="w-full p-2 border rounded mt-2"
-          >
-            {[5, 4, 3, 2, 1].map((num) => (
-              <option key={num} value={num}>
-                {num} Stars
-              </option>
-            ))}
-          </select>
-          <button type="submit" className="bg-blue-500 text-white p-2 rounded mt-3 w-full">
-            Submit Review
-          </button>
-        </form>
-      ) : (
-        <p className="mt-4 text-gray-600">Log in to leave a review.</p>
       )}
     </div>
   );
