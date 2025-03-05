@@ -27,10 +27,10 @@ app.use('/reviews', reviewRoutes);
 app.use('/users', userRoutes);
 app.use('/auth', authRoutes);
 
-
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ error: err.message });
+  res.status(err.status || 500).json({ error: err.message || "Internal Server Error" });
 });
+
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
