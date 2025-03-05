@@ -3,6 +3,8 @@ import Home from './pages/Home';
 import Books from './pages/Books';
 import BookDetails from './pages/BookDetails';
 import Profile from './pages/Profile';
+import Login from './pages/Login';
+import Register from './pages/Register';
 import Navbar from './components/Navbar';
 
 function App() {
@@ -14,6 +16,8 @@ function App() {
         <Route path="/books" element={<Books />} />
         <Route path="/books/:id" element={<BookDetails />} />
         <Route path="/profile" element={<Profile />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
       </Routes>
     </Router>
   );
