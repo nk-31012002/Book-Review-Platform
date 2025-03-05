@@ -19,11 +19,13 @@ mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopol
 const bookRoutes = require('./routes/books');
 const reviewRoutes = require('./routes/reviews');
 const userRoutes = require('./routes/users');
+const authRoutes = require('./routes/auth');
 
 
 app.use('/books', bookRoutes);
 app.use('/reviews', reviewRoutes);
 app.use('/users', userRoutes);
+app.use('/auth', authRoutes);
 
 
 app.use((err, req, res, next) => {
